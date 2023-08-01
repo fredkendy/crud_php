@@ -1,0 +1,21 @@
+    CRUD básico de clientes (Qualquer tipo de sistema terá, loja online, concessionária, livraria, ifood)
+
+-CREATE: Criar um novo registro
+-READ: Ler (exibir) as infos de um registro
+-UPDATE: Atualizar dados de um registro
+-DELETE: Apagar um registro
+
+    Tarefas:
+1. Criar banco de dados (crud_clientes)
+2. Criar página de cadastro do cliente
+3. Criar página de visualização dos clientes
+4. Criar página de exclusão dos clientes
+5. Criar página de edição do cliente
+
+Clientes 
+    id 
+    nome
+    email
+    data de nascimento
+    telefone                (salvar como varchar(11) ex: 14999999999 e dps com programação add () e -)
+    data de cadastro
