@@ -1,5 +1,15 @@
 <?php
 
+    if (!isset($_SESSION)) {
+        session_start();
+    }
+
+    //Se admin ñ existe ou existir mas for false, redirecionar para pag de clientes (evitar que usuario comum possa cadastrar ou editar; apenas admin pode)
+    if (!isset($_SESSION['admin']) || !$_SESSION['admin']) {
+        header("Location: clientes.php");
+        die();
+    }
+
     //Só vai existir quando clicar no "Sim"
     if (isset($_POST['confirmar'])) {
         include("lib/conexao.php");

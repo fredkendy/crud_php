@@ -1,5 +1,15 @@
 <?php
 
+    if (!isset($_SESSION)) {
+        session_start();
+    }
+
+    //Se admin ñ existe ou existir mas for false, redirecionar para pag de clientes (evitar que usuario comum possa cadastrar ou editar; apenas admin pode)
+    if (!isset($_SESSION['admin']) || !$_SESSION['admin']) {
+        header("Location: clientes.php");
+        die();
+    }
+
     //Nessa página o include vem no começo pq é passado o id como atributo get
     include("lib/conexao.php");
     include("lib/upload.php");
@@ -23,6 +33,7 @@
         $telefone = $_POST['telefone'];
         $data_nascimento = $_POST['data_nascimento'];
         $senha = $_POST['senha'];
+        $admin = $_POST['admin'];
 
         //Trecho criado para add nova senha caso o usuario a atualize (juntar com o sql_code principal)
         $sql_code_extra = "";
@@ -86,7 +97,7 @@
             echo "<p><b>$erro</b></p>";
         } else {
 
-            $sql_code = "UPDATE clientes SET nome = '$nome', email = '$email', $sql_code_extra telefone = '$telefone', data_nascimento = '$data_nascimento' WHERE id = '$id'";
+            $sql_code = "UPDATE clientes SET nome = '$nome', email = '$email', $sql_code_extra telefone = '$telefone', data_nascimento = '$data_nascimento', admin = '$admin'  WHERE id = '$id'";
             //Já incluiu o conexao.php
             $deu_certo = $mysqli->query($sql_code) or die($mysqli->error);
             if ($deu_certo) {
@@ -157,6 +168,12 @@
         <p>
             <label for="foto">Nova foto do usuário:</label>
             <input type="file" name="foto" id="foto">
+        </p>
+
+        <p>
+            <label for="admin">Tipo do usuário:</label>
+            <input type="radio" value="1" name="admin" id="admin"> ADMIN  
+            <input type="radio" value="0" checked name="admin" id="admin"> CLIENTE  
         </p>
         
         <p>

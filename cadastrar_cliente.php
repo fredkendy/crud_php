@@ -1,5 +1,15 @@
 <?php
 
+    if (!isset($_SESSION)) {
+        session_start();
+    }
+
+    //Se admin ñ existe ou existir mas for false, redirecionar para pag de clientes (evitar que usuario comum possa cadastrar ou editar; apenas admin pode)
+    if (!isset($_SESSION['admin']) || !$_SESSION['admin']) {
+        header("Location: clientes.php");
+        die();
+    }
+
     //Utilizado para limpar qualquer coisa que não seja número do campo 'telefone'
     function limparTexto($str) {
         return preg_replace("/[^0-9]/", "", $str);
@@ -20,6 +30,7 @@
         $telefone = $_POST['telefone'];
         $data_nascimento = $_POST['data_nascimento'];
         $senha_descriptografada = $_POST['senha'];
+        $admin = $_POST['admin'];
 
         //Verificação da senha
         if(strlen($senha_descriptografada) < 6 && strlen($senha_descriptografada) > 16) {
@@ -69,8 +80,8 @@
         } else {
             $senha = password_hash($senha_descriptografada, PASSWORD_DEFAULT);
             //Caso não tenha erro, fazer inserção no banco de dados
-            $sql_code = "INSERT INTO clientes (nome, email, senha, telefone, data_nascimento, data_cadastro, foto) 
-            VALUES ('$nome', '$email', '$senha', '$telefone', '$data_nascimento', NOW(), '$path')";
+            $sql_code = "INSERT INTO clientes (nome, email, senha, telefone, data_nascimento, data_cadastro, foto, admin) 
+            VALUES ('$nome', '$email', '$senha', '$telefone', '$data_nascimento', NOW(), '$path', '$admin')";
             //Já incluiu o conexao.php
             $deu_certo = $mysqli->query($sql_code) or die($mysqli->error);
             if ($deu_certo) {
@@ -81,7 +92,6 @@
         }
 
     }
-
 
 ?>
 
@@ -126,6 +136,12 @@
         <p>
             <label for="foto">Foto do usuário:</label>
             <input type="file" name="foto" id="foto">
+        </p>
+
+        <p>
+            <label for="admin">Tipo do usuário:</label>
+            <input type="radio" value="1" name="admin" id="admin"> ADMIN  
+            <input type="radio" value="0" checked name="admin" id="admin"> CLIENTE  
         </p>
         
         <p>
