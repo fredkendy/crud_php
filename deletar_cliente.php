@@ -2,15 +2,27 @@
 
     //Só vai existir quando clicar no "Sim"
     if (isset($_POST['confirmar'])) {
-        include("conexao.php");
+        include("lib/conexao.php");
 
         //Pegando o id da url como parametro 
         $id = intval($_GET['id']);
+
+        //Consultando se existe foto
+        $sql_cliente = "SELECT foto FROM clientes WHERE id = '$id'";
+        $query_cliente = $mysqli->query($sql_cliente) or die($mysqli->error);
+        $cliente = $query_cliente->fetch_assoc();
+
         $sql_code = "DELETE FROM clientes WHERE id = '$id'";
         $sql_query = $mysqli->query($sql_code) or die($mysqli->error);
 
         //Retorna true (deu certo) ou false (não deu)
-        if ($sql_query) { ?>
+        if ($sql_query) { 
+            
+            if(!empty($cliente['foto'])) {
+                unlink($cliente['foto']);
+            }
+
+            ?>
             <h1>Clinte deletado com sucesso!</h1>
             <p><a href="clientes.php">Clique aqui</a> para voltar a lista de clientes</p>
         <?php

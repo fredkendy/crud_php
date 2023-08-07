@@ -1,7 +1,8 @@
 <?php
 
     //Nessa página o include vem no começo pq é passado o id como atributo get
-    include("conexao.php");
+    include("lib/conexao.php");
+    include("lib/upload.php");
 
     //Tratamento para aceitar inteiros e evitar sql injection
     $id = intval($_GET['id']);
@@ -21,6 +22,21 @@
         $email = $_POST['email'];
         $telefone = $_POST['telefone'];
         $data_nascimento = $_POST['data_nascimento'];
+        $senha = $_POST['senha'];
+
+        //Trecho criado para add nova senha caso o usuario a atualize (juntar com o sql_code principal)
+        $sql_code_extra = "";
+        
+        //Caso altere a senha, executará um código extra SQL
+        if (!empty($senha)) {
+            //Verificação da senha
+            if(strlen($senha) < 6 && strlen($senha) > 16) {
+                $erro = "A senha precisa ter entre 6 e 16 caracteres";
+            } else {
+                $senha_criptografada = password_hash($senha, PASSWORD_DEFAULT);
+                $sql_code_extra = " senha = '$senha_criptografada', ";
+            }
+        }
 
         //Fazendo a verificação dos itens obrigatórios
         if (empty($nome)) {
@@ -48,12 +64,29 @@
             }
         }
 
+        if(isset($_FILES['foto'])) {
+            $arq = $_FILES['foto'];
+            $path = enviarArquivo($arq['error'], $arq['size'], $arq['name'], $arq['tmp_name']);
+            
+            if ($path == false) {
+                $erro = "Falha ao enviar arquivo. Tente novamente";
+            } else {
+                //Necessário o .= pois se o usuario redefiniu a senha, a variável extra será sobrescrita, e perderá a senha (.= adiciona, não sobrescreve)
+                $sql_code_extra .= " foto = '$path',";
+            }
+
+            //Verificação para apagar a foto antiga caso o usuário adicione uma nova
+            if (!empty($_POST['foto_antiga'])) {
+                unlink($_POST['foto_antiga']);
+            }
+        } 
+
         //Imprimindo o erro que foi detectado
         if ($erro) {
             echo "<p><b>$erro</b></p>";
         } else {
-            //Caso não tenha erro, fazer a ATUALIZAÇÃO no banco de dados
-            $sql_code = "UPDATE clientes SET nome = '$nome', email = '$email', telefone = '$telefone', data_nascimento = '$data_nascimento' WHERE id = '$id'";
+
+            $sql_code = "UPDATE clientes SET nome = '$nome', email = '$email', $sql_code_extra telefone = '$telefone', data_nascimento = '$data_nascimento' WHERE id = '$id'";
             //Já incluiu o conexao.php
             $deu_certo = $mysqli->query($sql_code) or die($mysqli->error);
             if ($deu_certo) {
@@ -75,12 +108,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Cliente</title>
+    <title>Editar Cliente</title>
 </head>
 <body>
     <a href="clientes.php">Voltar para a lista</a>
 
-    <form action="" method="post">
+    <h1>Editar Cliente</h1>
+
+    <form enctype="multipart/form-data" action="" method="post">
         <p>
             <label for="nome">Nome:</label>
             <!-- value: valor que será atribuído por padrão -->
@@ -94,6 +129,11 @@
         </p>
 
         <p>
+            <label for="senha">Senha:</label>
+            <input value="" name="senha" type="password" id="senha">
+        </p>
+
+        <p>
             <label for="telefone">Telefone:</label>
             <!-- Como telefone e data de nascimento não são obrigatórios, é necessários verificar se existem -->
             <input value="<?php if(!empty($cliente['telefone'])) echo formatarTelefone($cliente['telefone']) ?>" placeholder="(11) 98888-8888" type="text" name="telefone" id="telefone">
@@ -102,6 +142,21 @@
         <p>
             <label for="data_nascimento">Data de nascimento:</label>
             <input value="<?php if(!empty($cliente['data_nascimento'])) echo formatarData($cliente['data_nascimento']) ?>" type="text" name="data_nascimento" id="data_nascimento">
+        </p>
+
+        <!-- Input criado para verificar se houve atualização da foto -->
+        <input name="foto_antiga" type="hidden" value="<?php echo $cliente['foto']; ?>">
+
+        <?php if($cliente['foto']) { ?>
+        <p>
+            <label>Foto atual:</label>
+            <img height="50" src="<?php echo $cliente['foto']; ?>">
+        </p>
+        <?php } ?>
+
+        <p>
+            <label for="foto">Nova foto do usuário:</label>
+            <input type="file" name="foto" id="foto">
         </p>
         
         <p>
