@@ -1,6 +1,6 @@
 <?php
 
-    include('conexao.php');
+    include('lib/conexao.php');
 
     $sql_clientes = "SELECT * FROM clientes";
     $query_clientes = $mysqli->query($sql_clientes) or die($mysqli->error);
@@ -24,6 +24,7 @@
 
     <table border="1" cellpadding="10">
         <thead>
+            <th>Imagem</th>
             <th>Id</th>
             <th>Nome</th>
             <th>E-mail</th>
@@ -58,6 +59,8 @@
 
             ?>
             <tr>
+                <!-- Imagem aparece apenas no localhost; contratar hospedagem -->
+                <td><img height="40" src="<?php echo $cliente['foto']; ?>" ></td>
                 <td><?php echo $cliente['id']; ?></td>
                 <td><?php echo $cliente['nome']; ?></td>
                 <td><?php echo $cliente['email']; ?></td>

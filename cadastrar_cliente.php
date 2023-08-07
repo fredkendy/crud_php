@@ -8,7 +8,9 @@
     //se o tamanho do array for maior que zero
     if (count($_POST) > 0) {
 
-        include("conexao.php");
+        include("lib/conexao.php");
+        include("lib/upload.php");
+        include('lib/mail.php');
 
         //Se não tiver erro, vai continuar sendo false
         $erro = false; 
@@ -17,6 +19,12 @@
         $email = $_POST['email'];
         $telefone = $_POST['telefone'];
         $data_nascimento = $_POST['data_nascimento'];
+        $senha_descriptografada = $_POST['senha'];
+
+        //Verificação da senha
+        if(strlen($senha_descriptografada) < 6 && strlen($senha_descriptografada) > 16) {
+            $erro = "A senha precisa ter entre 6 e 16 caracteres";
+        }    
 
         //Fazendo a verificação dos itens obrigatórios
         if (empty($nome)) {
@@ -44,16 +52,29 @@
             }
         }
 
+        //Se n incluir ft, a path = nada; e qdo existir, a função de upload.php retorna o seu path
+        $path = "";
+        if(isset($_FILES['foto'])) {
+            $arq = $_FILES['foto'];
+            $path = enviarArquivo($arq['error'], $arq['size'], $arq['name'], $arq['tmp_name']);
+            
+            if ($path == false) {
+                $erro = "Flha ao enviar arquivo. Tente novamente";
+            }
+        } 
+
         //Imprimindo o erro que foi detectado
         if ($erro) {
             echo "<p><b>$erro</b></p>";
         } else {
+            $senha = password_hash($senha_descriptografada, PASSWORD_DEFAULT);
             //Caso não tenha erro, fazer inserção no banco de dados
-            $sql_code = "INSERT INTO clientes (nome, email, telefone, data_nascimento, data_cadastro) 
-            VALUES ('$nome', '$email', '$telefone', '$data_nascimento', NOW())";
+            $sql_code = "INSERT INTO clientes (nome, email, senha, telefone, data_nascimento, data_cadastro, foto) 
+            VALUES ('$nome', '$email', '$senha', '$telefone', '$data_nascimento', NOW(), '$path')";
             //Já incluiu o conexao.php
             $deu_certo = $mysqli->query($sql_code) or die($mysqli->error);
             if ($deu_certo) {
+                enviar_email($email, "Sua conta no meu site foi criada", "<h1>Parabéns!</h1><p>Sua conta no site foi criada!</p><p><b>Login:</b>$email<br><b>Senha:</b>$senha_descriptografada</p>");
                 echo "<p><b>Cliente cadastrado com sucesso!</b></p>";
                 unset($_POST);  //limpar post (zerar campos)
             }
@@ -74,7 +95,7 @@
 <body>
     <a href="clientes.php">Voltar para a lista</a>
 
-    <form action="" method="post">
+    <form enctype="multipart/form-data" action="" method="post">
         <p>
             <label for="nome">Nome:</label>
             <!-- value: valor que será atribuído por padrão -->
@@ -95,6 +116,16 @@
         <p>
             <label for="data_nascimento">Data de nascimento:</label>
             <input value="<?php if(isset($_POST['data_nascimento'])){ echo $_POST['data_nascimento']; } ?>" type="text" name="data_nascimento" id="data_nascimento">
+        </p>
+
+        <p>
+            <label for="senha">Senha:</label>
+            <input value="<?php if(isset($_POST['senha'])){ echo $_POST['senha']; } ?>" type="password" name="senha" id="senha">
+        </p>
+
+        <p>
+            <label for="foto">Foto do usuário:</label>
+            <input type="file" name="foto" id="foto">
         </p>
         
         <p>
